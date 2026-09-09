@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>くるまを はこぼう｜家庭用の試作</title>
+<style>
+/* One file, no dependencies, no storage, no analytics, no service worker. */
+:root{--ink:#344c50;--muted:#617573;--paper:#f7f6f0;--line:#d8e1d9;--green:#426b60;--soft:#edf1e9;--road:#dadfd7;--radius:22px}
+*{box-sizing:border-box}
+html{background:var(--paper);-webkit-text-size-adjust:100%}
+body{margin:0;color:var(--ink);font-family:"Hiragino Maru Gothic ProN","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;font-size:16px;line-height:1.5}
+button,summary{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+button{font:inherit;color:inherit;cursor:pointer;-webkit-appearance:none;appearance:none}
+button:focus-visible,summary:focus-visible{outline:3px solid #a5783e;outline-offset:4px}
+button:disabled{cursor:default}
+[hidden]{display:none!important}
+.icon-library{position:absolute;width:0;height:0;overflow:hidden}
+.app{max-width:460px;min-height:100svh;margin:auto;padding:12px 16px max(12px,env(safe-area-inset-bottom));display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;justify-content:space-between;min-height:45px;gap:10px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:17px;letter-spacing:.025em;margin:0}
+.brand svg{width:32px;height:32px;flex:none}
+.home-button{border:1px solid var(--line);border-radius:14px;background:#fffdf6;min-height:44px;min-width:68px;padding:6px 10px;font-size:12px;display:flex;align-items:center;justify-content:center;gap:5px}
+.home-button svg{height:18px;width:18px}
+.heading{margin:15px 0 12px;text-align:center}
+h2{font-size:24px;line-height:1.4;margin:0;font-weight:700;letter-spacing:.07em}
+.subtitle{font-size:13px;color:var(--muted);margin:5px 0 0;min-height:20px;letter-spacing:.035em}
+.scene{position:relative;overflow:hidden;width:100%;aspect-ratio:1.75;background:#e9efea;border:1px solid #dce4da;border-radius:var(--radius);isolation:isolate}
+.scenery{position:absolute;inset:0;width:100%;height:100%;z-index:-1}
+.scene-tag{position:absolute;top:12px;left:14px;background:#fafbf4eb;border-radius:10px;padding:3px 10px;font-size:12px;letter-spacing:.1em}
+.place-building{position:absolute;right:20px;top:15px;width:63px;height:50px;opacity:.82}
+.carrier{position:absolute;left:3%;bottom:38px;width:94%;aspect-ratio:360/136;will-change:transform}
+.truck-frame{position:absolute;inset:0;width:100%;height:100%}
+.cargo-slots{position:absolute;left:3%;top:24%;width:73%;height:46%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;align-items:end}
+.seat{position:relative;width:100%;height:100%;padding:0;border:0;background:transparent;display:flex;align-items:flex-end;justify-content:center;border-radius:8px}
+.seat svg{width:100%;height:auto;max-height:100%;pointer-events:none}
+.seat.filled:active svg{transform:translateY(2px)}
+.seat-number{position:absolute;left:50%;top:-12px;transform:translateX(-50%);font-size:13px;font-weight:700;color:var(--ink);line-height:20px}
+.empty-outline{width:85%;height:66%;margin-bottom:4px;border:1.5px dashed #93aaa3;border-radius:10px}
+.scene[data-phase="delivering"] .empty-outline{border-color:#b4c3b9}
+.parking{position:absolute;left:4%;bottom:3px;width:70%;height:38px;display:grid;grid-template-columns:repeat(3,1fr);gap:7px;align-items:end}
+.parking-space{height:35px;border:1px solid #f6f7ef;border-top:0;border-radius:0 0 4px 4px;display:flex;justify-content:center;align-items:end}
+.parking-space svg{width:66px;height:39px}
+.counter{height:40px;display:flex;justify-content:center;align-items:center;gap:9px;font-size:13px;color:var(--muted)}
+.counter strong{color:var(--ink);font-size:22px;font-variant-numeric:tabular-nums;font-weight:700}
+.counter .units{font-size:14px;margin-left:-4px}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.vehicle-choice{min-width:0;min-height:90px;border:1px solid #dbe2d8;border-radius:17px;background:#fffef9;padding:5px 8px 7px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 2px 0 #e6e9df}
+.vehicle-choice svg{width:99px;height:53px;pointer-events:none}
+.vehicle-name{font-size:14px;line-height:1.35;font-weight:700;letter-spacing:.035em}
+.vehicle-choice:active:not(:disabled){transform:translateY(1px);box-shadow:0 1px 0 #e6e9df}
+.vehicle-choice:disabled{opacity:.63;box-shadow:none}
+.status{min-height:26px;padding:5px 0 1px;font-size:12px;text-align:center;color:var(--muted)}
+.primary{width:100%;min-height:54px;background:var(--green);color:#fffef8;border:0;border-radius:17px;font-size:19px;font-weight:700;letter-spacing:.08em;margin-top:7px;padding:11px 18px}
+.primary:disabled{background:#e2e7de;color:#748177}
+.phase-note{min-height:188px;border:1px solid var(--line);border-radius:17px;background:#fffef7;padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.phase-note svg{width:54px;height:44px;opacity:.8;margin-bottom:12px}
+.phase-note p{font-size:17px;letter-spacing:.035em;margin:0}
+.phase-note small{font-size:13px;color:var(--muted);margin-top:8px}
+.parents{margin-top:auto;padding-top:14px;text-align:center}
+.parents details{font-size:12px;color:var(--muted)}
+.parents summary{cursor:pointer;display:inline-block;padding:7px 12px;min-height:32px;border-radius:8px}
+.parents summary::-webkit-details-marker{display:none}
+.parents summary:before{content:"＋ ";font-size:12px}
+.parents details[open] summary:before{content:"− "}
+.parent-panel{margin:4px 0 0;background:#ecefe7;border-radius:14px;padding:13px;text-align:left;line-height:1.8}
+.parent-panel p{margin:0 0 8px}
+.reset{background:#fffef9;border:1px solid #c6d1c5;border-radius:10px;min-height:44px;width:100%;font-size:13px}
+.end-screen{padding:36px 0 16px;text-align:center}
+.end-screen h2{font-size:25px;margin-top:19px}
+.end-screen p{font-size:14px;line-height:1.9;color:var(--muted);margin-top:10px}
+.garage-art{display:block;width:88%;height:auto;max-width:335px;margin:0 auto}
+.scene[data-phase="traveling"] .carrier{animation:delivery-drive 1.6s ease-in-out both}
+.scene[data-phase="returning"] .carrier{animation:return-drive 1.25s ease-in-out both}
+@keyframes delivery-drive{0%{transform:translateX(0)}42%{transform:translateX(118%);opacity:1}43%{transform:translateX(118%);opacity:0}44%{transform:translateX(-118%);opacity:0}45%{transform:translateX(-118%);opacity:1}100%{transform:translateX(0);opacity:1}}
+@keyframes return-drive{from{transform:translateX(0)}to{transform:translateX(118%)}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+@media(max-height:710px){.app{padding-top:7px}.topbar{min-height:42px}.heading{margin:9px 0}.heading h2{font-size:22px}.subtitle{margin-top:3px}.scene{aspect-ratio:1.95}.carrier{bottom:32px}.counter{height:33px}.vehicle-choice{min-height:77px;padding:3px 7px 5px}.vehicle-choice svg{height:43px;width:86px}.phase-note{min-height:162px}.primary{min-height:48px;padding:9px 14px;margin-top:5px}.parents{padding-top:7px}.status{font-size:11px;min-height:24px}.end-screen{padding-top:26px}}
+</style>
+</head>
+<body>
+<!-- Vehicle drawings are embedded SVG, not downloaded images. -->
+<svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+<symbol id="wheel" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#3f5157"/><circle cx="10" cy="10" r="4.1" fill="#eef0e8"/></symbol>
+<symbol id="sedan" viewBox="0 0 120 72">
+<path d="M12 41L27 37 42 21Q44 19 50 19H72Q77 19 81 24L91 37 104 40Q110 41 111 49L110 57H9L8 49Q8 43 12 41Z" fill="#719bae" stroke="#567f90" stroke-width="1.5"/>
+<path d="M34 36L46 23H56V36Z" fill="#e0ecea"/><path d="M61 23H72L84 36H61Z" fill="#e0ecea"/>
+<rect x="66" y="41" width="9" height="2.5" rx="1.25" fill="#d9e7e5"/>
+<path d="M13 44H21V49H10" fill="#f0e4b5"/><path d="M104 43H110V49H105" fill="#e1aa8a"/>
+<use href="#wheel" x="22" y="47" width="20" height="20"/><use href="#wheel" x="84" y="47" width="20" height="20"/>
+</symbol>
+<symbol id="suv" viewBox="0 0 120 72">
+<path d="M10 31Q10 26 17 26H30L39 16H82Q87 16 90 23L96 34 107 36Q112 37 113 43V57H8V39Z" fill="#c6aa57" stroke="#a58c41" stroke-width="1.5"/>
+<path d="M38 31L44 21H58V33H37Z" fill="#ecedd6"/><path d="M64 21H80L86 33H64Z" fill="#ecedd6"/>
+<path d="M16 31H30V41H15Z" fill="#ecedd6"/>
+<path d="M8 49H113V56H8Z" fill="#9c926e"/>
+<rect x="69" y="38" width="8" height="2.5" rx="1" fill="#f4eccb"/>
+<rect x="105" y="39" width="8" height="7" rx="1" fill="#f5eaca"/>
+<use href="#wheel" x="20" y="47" width="21" height="21"/><use href="#wheel" x="85" y="47" width="21" height="21"/>
+</symbol>
+<symbol id="fire" viewBox="0 0 120 72">
+<path d="M9 28H78V20H97L111 34V56H8V33Z" fill="#b86d5f" stroke="#975348" stroke-width="1.5"/>
+<rect x="13" y="33" width="56" height="17" rx="2" fill="#d4dad4"/>
+<path d="M21 34V49M31 34V49M41 34V49M51 34V49M61 34V49" stroke="#a2b1ad" stroke-width="1.5"/>
+<path d="M83 24H94L104 35H83Z" fill="#dce7df"/>
+<rect x="80" y="15" width="11" height="6" rx="2" fill="#ac6058"/>
+<path d="M15 17H72M15 23H72M19 17V23M29 17V23M39 17V23M49 17V23M59 17V23M69 17V23" fill="none" stroke="#7f9695" stroke-width="3" stroke-linecap="round"/>
+<rect x="17" y="23" width="5" height="5" fill="#7f9695"/><rect x="65" y="23" width="5" height="5" fill="#7f9695"/>
+<path d="M106 40H112V47H106Z" fill="#f0e5bf"/>
+<use href="#wheel" x="18" y="47" width="21" height="21"/><use href="#wheel" x="84" y="47" width="21" height="21"/>
+</symbol>
+<symbol id="police" viewBox="0 0 120 72">
+<path d="M12 40L29 35 41 21H76L91 35 105 40Q110 42 111 48V57H9V47Q9 42 12 40Z" fill="#f7f6e9" stroke="#77898a" stroke-width="1.5"/>
+<path d="M35 35L46 24H56V35Z" fill="#c2d9dc"/><path d="M62 24H73L83 35H62Z" fill="#c2d9dc"/>
+<path d="M10 44H110V56H10Z" fill="#4e5f66"/>
+<rect x="51" y="15" width="19" height="6" rx="2.5" fill="#b77368"/>
+<rect x="52" y="12" width="17" height="5" rx="2.5" fill="#bc7e71"/>
+<path d="M61 41L63 45 68 46 65 49 66 54 61 52 57 54 58 49 54 46 59 45Z" fill="#c6ad65"/>
+<rect x="103" y="41" width="7" height="5" rx="1" fill="#f0e4b5"/>
+<use href="#wheel" x="21" y="47" width="20" height="20"/><use href="#wheel" x="84" y="47" width="20" height="20"/>
+</symbol>
+<symbol id="carrier-base" viewBox="0 0 360 136">
+<path d="M13 87H269V97H13Z" fill="#91a7a0" stroke="#728d86" stroke-width="1.5"/>
+<path d="M17 97H279V110H17Z" fill="#657f79"/>
+<path d="M19 103H253" stroke="#c5d3c8" stroke-width="2.5"/>
+<path d="M272 46Q272 41 278 41H316Q323 41 326 48L341 72Q347 76 347 84V109H268V81Z" fill="#769a8b" stroke="#587b70" stroke-width="1.5"/>
+<path d="M283 49H315L329 72H283Z" fill="#dfebe4"/>
+<path d="M306 49V72" stroke="#8faa9e" stroke-width="3"/>
+<rect x="283" y="79" width="10" height="3" rx="1.5" fill="#d8e4d8"/>
+<rect x="339" y="85" width="7" height="9" rx="1" fill="#ebe1b8"/>
+<rect x="340" y="102" width="12" height="8" rx="3" fill="#becdc4"/>
+<rect x="10" y="100" width="5" height="7" rx="1" fill="#b8786c"/>
+<use href="#wheel" x="39" y="103" width="26" height="26"/><use href="#wheel" x="77" y="103" width="26" height="26"/><use href="#wheel" x="301" y="103" width="26" height="26"/>
+</symbol>
+<symbol id="home" viewBox="0 0 24 24"><path d="M3 10L12 3 21 10V21H3Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 21V13H16V21" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+</defs></svg>
+<main class="app" id="app">
+<header class="topbar">
+<h1 class="brand"><svg viewBox="0 0 36 32" aria-hidden="true"><rect x="2" y="10" width="22" height="13" rx="3" fill="#91ac9d"/><path d="M24 13H30L35 20V25H23Z" fill="#658779"/><rect x="25" y="15" width="4" height="5" rx="1" fill="#e1ece3"/><circle cx="9" cy="25" r="4" fill="#526767"/><circle cx="29" cy="25" r="4" fill="#526767"/></svg>くるまを はこぼう</h1>
+<button type="button" class="home-button" id="home-button" aria-label="途中でも車庫へ帰って終了する"><svg aria-hidden="true"><use href="#home"/></svg>かえる</button>
+</header>
+<section id="play-screen" aria-label="車のお届け遊び">
+<div class="heading"><h2 id="instruction">くるまを のせよう</h2><p class="subtitle" id="subtitle">すきなくるまを ３だいまで</p></div>
+<div class="scene" id="scene" data-phase="loading" aria-label="カーキャリア">
+<svg class="scenery" viewBox="0 0 420 240" preserveAspectRatio="none" aria-hidden="true">
+<path d="M0 125Q50 93 108 121T240 119T420 120V240H0Z" fill="#d8e3d2"/>
+<path d="M0 145Q95 123 170 143T420 134V240H0Z" fill="#e3e8d9"/>
+<path d="M0 173H420V240H0Z" fill="#d6ded6"/>
+<path d="M0 234H420" stroke="#f6f6e8" stroke-width="2"/>
+<path d="M23 135V149M384 131V146" stroke="#9aa894" stroke-width="4"/>
+<ellipse cx="23" cy="120" rx="16" ry="24" fill="#c2d2bd"/><ellipse cx="384" cy="116" rx="14" ry="25" fill="#c2d2bd"/>
+</svg>
+<span class="scene-tag" id="scene-tag">しゃこ</span>
+<svg class="place-building" viewBox="0 0 70 58" aria-hidden="true"><path d="M5 16L35 3 65 16V53H5Z" fill="#c6cbb9"/><rect x="15" y="23" width="40" height="30" rx="2" fill="#afbeac"/><path d="M15 30H55M15 37H55M15 44H55" stroke="#cdd5c4" stroke-width="2"/></svg>
+<div class="carrier" id="carrier"><svg class="truck-frame" viewBox="0 0 360 136" aria-hidden="true"><use href="#carrier-base"/></svg><div class="cargo-slots" id="cargo-slots"></div></div>
+<div class="parking" id="parking" aria-label="届けた車" hidden></div>
+</div>
+<div class="counter" aria-label="車の台数"><span id="counter-label">のっている くるま</span><strong id="count">0</strong><span class="units">だい</span></div>
+<div class="choices" id="choices" aria-label="乗せたい車を選ぶ"></div>
+<div class="phase-note" id="phase-note" hidden><svg id="note-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#home"/></svg><p id="note-title"></p><small id="note-subtitle"></small></div>
+<div class="status" id="status" role="status" aria-live="polite" aria-atomic="true">タップすると のるよ</div>
+<button type="button" class="primary" id="primary" disabled>しゅっぱつ</button>
+</section>
+<section class="end-screen" id="end-screen" aria-labelledby="end-title" hidden>
+<svg class="garage-art" viewBox="0 0 340 255" role="img" aria-label="車庫に帰って休むカーキャリア">
+<rect x="5" y="7" width="330" height="240" rx="28" fill="#e8ede3"/>
+<path d="M30 220H310" stroke="#c0ccba" stroke-width="3" stroke-linecap="round"/>
+<path d="M65 84L170 33 275 84V216H65Z" fill="#c4caba"/>
+<path d="M61 85L170 30 279 85" fill="none" stroke="#93a58f" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="86" y="99" width="168" height="117" rx="5" fill="#85988c"/>
+<path d="M86 99H254V130H86Z" fill="#b2bfad"/>
+<path d="M86 109H254M86 119H254" stroke="#cdd5c5" stroke-width="2"/>
+<rect x="142" y="60" width="56" height="22" rx="5" fill="#eff0e4"/>
+<text x="170" y="76" text-anchor="middle" font-size="12" fill="#51695c" font-family="sans-serif">しゃこ</text>
+<use href="#carrier-base" x="98" y="139" width="144" height="68"/>
+<ellipse cx="40" cy="188" rx="12" ry="24" fill="#bdcfb6"/><path d="M40 210V220" stroke="#95a98c" stroke-width="4"/>
+</svg>
+<h2 id="end-title" tabindex="-1">おとどけ おしまい</h2><p>くるまは しゃこで おやすみ。</p>
+</section>
+<footer class="parents"><details id="parent-details"><summary>保護者の方へ</summary><div class="parent-panel"><p>試作 0.1。車をタップして乗せ、乗っている車をタップすると降ろせます。１回の配送で終了します。途中でも右上の「かえる」で終われます。</p><p>音・出題・得点・広告・データ保存・外部へのデータ送信はありません。このメニューは本格的なチャイルドロックではありません。</p><button type="button" class="reset" id="reset">最初の画面に戻す</button></div></details></footer>
+<noscript><p>この試作を動かすには、ブラウザのJavaScriptを有効にしてください。</p></noscript>
+</main>
+<script>
+'use strict';
+// All game state lives only in memory. Refreshing starts a new, empty trip.
+const VEHICLES = Object.freeze([
+  {id:'sedan', name:'セダン', description:'あおい セダン'},
+  {id:'suv', name:'SUV', description:'きいろい SUV'},
+  {id:'fire', name:'しょうぼうしゃ', description:'あかい しょうぼうしゃ'},
+  {id:'police', name:'パトカー', description:'しろと くろの パトカー'}
+]);
+const CAPACITY = 3;
+const state = {phase:'loading', cargo:[], delivered:[], message:'タップすると のるよ', timer:null, version:0};
+const get = id => document.getElementById(id);
+const ui = Object.fromEntries(['play-screen','end-screen','home-button','instruction','subtitle','scene','scene-tag','cargo-slots','parking','count','counter-label','choices','phase-note','note-title','note-subtitle','status','primary','parent-details','reset','end-title'].map(id=>[id,get(id)]));
+const vehicleById = id => VEHICLES.find(v=>v.id===id);
+function carIcon(id){return `<svg viewBox="0 0 120 72" aria-hidden="true" focusable="false"><use href="#${id}"/></svg>`;}
+function clearTimer(){if(state.timer!==null){window.clearTimeout(state.timer);state.timer=null;}state.version+=1;}
+function schedule(callback, milliseconds){
+  clearTimer();
+  const expectedVersion=state.version;
+  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  state.timer=window.setTimeout(()=>{state.timer=null;if(expectedVersion===state.version)callback();},reduced?40:milliseconds);
+}
+function renderCargo(){
+  ui['cargo-slots'].replaceChildren();
+  for(let i=0;i<CAPACITY;i++){
+    const item=state.cargo[i];
+    if(!item){const empty=document.createElement('div');empty.className='seat';empty.setAttribute('aria-hidden','true');empty.innerHTML='<span class="empty-outline"></span>';ui['cargo-slots'].append(empty);continue;}
+    const info=vehicleById(item);
+    const button=document.createElement('button');button.type='button';button.className='seat filled';
+    const canRemove=state.phase==='loading'||state.phase==='delivering';
+    button.disabled=!canRemove;
+    button.setAttribute('aria-label',`${i+1}台目、${info.description}。${canRemove?'タップして降ろす':'運んでいます'}`);
+    button.innerHTML=`<span class="seat-number" aria-hidden="true">${i+1}</span>${carIcon(item)}`;
+    button.addEventListener('click',()=>removeCar(i));ui['cargo-slots'].append(button);
+  }
+}
+function renderChoices(){
+  ui.choices.replaceChildren();
+  for(const info of VEHICLES){
+    const button=document.createElement('button');button.type='button';button.className='vehicle-choice';button.dataset.vehicle=info.id;
+    button.disabled=state.cargo.length>=CAPACITY||state.phase!=='loading';
+    button.setAttribute('aria-label',`${info.description}を１台乗せる`);
+    button.innerHTML=`${carIcon(info.id)}<span class="vehicle-name">${info.name}</span>`;
+    button.addEventListener('click',()=>addCar(info.id));ui.choices.append(button);
+  }
+}
+function renderParking(){
+  ui.parking.replaceChildren();
+  state.delivered.forEach(id=>{const spot=document.createElement('div');spot.className='parking-space';spot.setAttribute('role','img');spot.setAttribute('aria-label',`届けた${vehicleById(id).description}`);spot.innerHTML=carIcon(id);ui.parking.append(spot);});
+}
+function setNote(title, subtitle){ui['note-title'].textContent=title;ui['note-subtitle'].textContent=subtitle;}
+function render(){
+  const finished=state.phase==='ended';
+  ui['play-screen'].hidden=finished;ui['end-screen'].hidden=!finished;ui['home-button'].hidden=finished;
+  ui['home-button'].disabled=state.phase==='returning';
+  ui.scene.dataset.phase=state.phase;
+  ui.count.textContent=String(state.cargo.length);
+  ui.status.textContent=state.message;
+  if(finished)return;
+  const loading=state.phase==='loading';
+  ui.choices.hidden=!loading;ui['phase-note'].hidden=loading;
+  ui.parking.hidden=state.phase!=='delivering';
+  ui['counter-label'].textContent=state.phase==='delivering'?'のこりの くるま':'のっている くるま';
+  ui.primary.disabled=true;
+  if(loading){
+    ui.instruction.textContent='くるまを のせよう';ui.subtitle.textContent='すきなくるまを ３だいまで';ui['scene-tag'].textContent='しゃこ';
+    ui.primary.textContent='しゅっぱつ';ui.primary.disabled=state.cargo.length===0;
+  }else if(state.phase==='traveling'){
+    ui.instruction.textContent='とどけに いこう';ui.subtitle.textContent='カーキャリアで おとどけ';ui['scene-tag'].textContent='おとどけの みち';
+    ui.primary.textContent='はこんでいるよ';setNote('くるまを はこんでいるよ','とどけさきへ むかいます');
+  }else if(state.phase==='delivering'){
+    const empty=state.cargo.length===0;
+    ui.instruction.textContent=empty?'くるまを とどけたね':'くるまを おろそう';
+    ui.subtitle.textContent=empty?'しゃこへ かえろう':'のっている くるまを タップ';ui['scene-tag'].textContent='とどけさき';
+    ui.primary.textContent=empty?'しゃこへ かえる':'くるまを おろそう';ui.primary.disabled=!empty;
+    setNote(empty?'おとどけ おわり':'くるまを タップ',empty?'つぎは しゃこで おやすみ':'１だいずつ おろそう');
+  }else if(state.phase==='returning'){
+    ui.instruction.textContent='しゃこへ かえろう';ui.subtitle.textContent='きょうの おとどけは おしまい';ui['scene-tag'].textContent='かえりみち';
+    ui.primary.textContent='しゃこへ かえります';setNote('くるまは おやすみ','しゃこへ かえります');
+  }
+  renderCargo();renderChoices();renderParking();
+}
+function addCar(id){
+  if(state.phase!=='loading'||state.cargo.length>=CAPACITY||!vehicleById(id))return;
+  state.cargo.push(id);state.message=state.cargo.length===CAPACITY?'３だい のったね。しゅっぱつ できるよ':`${vehicleById(id).name}が のったね`;
+  render();
+}
+function removeCar(index){
+  if(!['loading','delivering'].includes(state.phase)||index<0||index>=state.cargo.length)return;
+  const [id]=state.cargo.splice(index,1);
+  if(state.phase==='delivering'){
+    state.delivered.push(id);state.message=state.cargo.length?`${vehicleById(id).name}を とどけたね`:'みんな とどいたね。しゃこへ かえろう';
+  }else state.message=state.cargo.length?'ほかの くるまも のせられるよ':'タップすると のるよ';
+  render();
+}
+function depart(){
+  if(state.phase!=='loading'||state.cargo.length===0)return;
+  state.phase='traveling';state.message='';render();
+  schedule(()=>{state.phase='delivering';state.message='のっている くるまを タップしてね';render();},1600);
+}
+function goHome(){
+  if(['returning','ended'].includes(state.phase))return;
+  clearTimer();state.phase='returning';state.message='';render();
+  schedule(()=>{state.phase='ended';render();ui['end-title'].focus({preventScroll:true});},1250);
+}
+function resetGame(){
+  clearTimer();state.phase='loading';state.cargo=[];state.delivered=[];state.message='タップすると のるよ';ui['parent-details'].open=false;render();
+}
+ui.primary.addEventListener('click',()=>{if(state.phase==='loading')depart();else if(state.phase==='delivering'&&state.cargo.length===0)goHome();});
+ui['home-button'].addEventListener('click',goHome);
+ui.reset.addEventListener('click',()=>{if(window.confirm('最初の画面に戻しますか？ 新しい配送が始まります。'))resetGame();});
+render();
+</script>
+</body>
+</html>
