@@ -6,6 +6,7 @@
 <meta name="color-scheme" content="light">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="app-version" content="0.2">
 <title>くるまを はこぼう｜家庭用の試作</title>
 <style>
 /* One file, no dependencies, no storage, no analytics, no service worker. */
@@ -73,12 +74,64 @@ h2{font-size:24px;line-height:1.4;margin:0;font-weight:700;letter-spacing:.07em}
 .end-screen h2{font-size:25px;margin-top:19px}
 .end-screen p{font-size:14px;line-height:1.9;color:var(--muted);margin-top:10px}
 .garage-art{display:block;width:88%;height:auto;max-width:335px;margin:0 auto}
-.scene[data-phase="traveling"] .carrier{animation:delivery-drive 1.6s ease-in-out both}
-.scene[data-phase="returning"] .carrier{animation:return-drive 1.25s ease-in-out both}
-@keyframes delivery-drive{0%{transform:translateX(0)}42%{transform:translateX(118%);opacity:1}43%{transform:translateX(118%);opacity:0}44%{transform:translateX(-118%);opacity:0}45%{transform:translateX(-118%);opacity:1}100%{transform:translateX(0);opacity:1}}
-@keyframes return-drive{from{transform:translateX(0)}to{transform:translateX(118%)}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 @media(max-height:710px){.app{padding-top:7px}.topbar{min-height:42px}.heading{margin:9px 0}.heading h2{font-size:22px}.subtitle{margin-top:3px}.scene{aspect-ratio:1.95}.carrier{bottom:32px}.counter{height:33px}.vehicle-choice{min-height:77px;padding:3px 7px 5px}.vehicle-choice svg{height:43px;width:86px}.phase-note{min-height:162px}.primary{min-height:48px;padding:9px 14px;margin-top:5px}.parents{padding-top:7px}.status{font-size:11px;min-height:24px}.end-screen{padding-top:26px}}
+
+/* Version 0.2: paged vehicle shelf, deliberate movements, return road and quiz. */
+:root{--load-time:1050ms;--unload-time:1150ms;--drive-time:6800ms}
+.app{padding-top:max(12px,env(safe-area-inset-top))}
+.vehicle-choice{min-height:94px}
+.vehicle-choice svg{height:52px}
+.vehicle-name{min-height:36px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:13px}
+.vehicle-choice:disabled{opacity:.7}
+.shelf-navigation{display:flex;align-items:center;justify-content:center;gap:18px;padding-top:9px;min-height:49px}
+.shelf-navigation button{width:58px;min-height:42px;background:#fffef7;border:1px solid var(--line);border-radius:13px;font-size:22px;line-height:1}
+.shelf-navigation button:disabled{opacity:.35}
+.shelf-page{font-size:13px;color:var(--muted);min-width:96px;text-align:center}
+.road-view{display:none;position:absolute;inset:0;width:100%;height:100%;z-index:-1}
+.scene.is-driving .road-view{display:block}
+.scene.is-driving .empty-outline{visibility:hidden}
+.scene[data-phase="returning"]~.phase-note{margin-top:12px}
+.scene.is-driving>.scenery,.scene.is-driving .place-building{visibility:hidden}
+.scene.is-driving .road-far{animation:far-pass var(--drive-time) linear both}
+.scene.is-driving .road-near{animation:near-pass var(--drive-time) linear both}
+.scene.is-driving .road-dashes{animation:near-pass var(--drive-time) linear both}
+.scene.is-driving .carrier{animation:road-cruise var(--drive-time) ease-in-out both}
+.car-art{display:flex;align-items:flex-end;justify-content:center;width:100%;height:100%;pointer-events:none}
+.seat.is-loading .car-art{animation:load-car var(--load-time) ease-in-out both}
+.seat.is-unloading .car-art{animation:unload-car var(--unload-time) ease-in-out both}
+.seat.is-loading .seat-number,.seat.is-unloading .seat-number{visibility:hidden}
+.seat:disabled{opacity:1}
+.counter[hidden]{display:none}
+.quiz-screen{text-align:center;padding:12px 0 8px}
+.quiz-garage{width:128px;height:97px;display:block;margin:2px auto 13px}
+.quiz-screen h2{font-size:25px;letter-spacing:.02em}
+.quiz-subtitle{font-size:13px;color:var(--muted);margin:7px 0 22px}
+.quiz-answers{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 4px}
+.answer{min-width:0;min-height:91px;background:#fffef7;border:2px solid #d7e0d5;border-radius:20px;font-size:38px;font-weight:700;font-variant-numeric:tabular-nums}
+.answer[data-result="correct"]{border-color:#547d6d;background:#edf3e8}
+.answer[data-result="incorrect"]{border-color:#9b8173;background:#f4eee5}
+.answer:disabled{opacity:1;color:var(--ink)}
+.quiz-feedback{min-height:110px;padding:14px 2px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.feedback-mark{display:block;width:50px;height:50px;line-height:1;color:#537567}
+.feedback-mark[data-kind="incorrect"]{color:#947f72}
+.feedback-mark svg{width:50px;height:50px;display:block}
+.feedback-text{font-size:15px;min-height:24px;margin:0;color:var(--muted)}
+.hint-toggle{min-height:44px;padding:8px 16px;background:transparent;border:1px solid var(--line);border-radius:12px;font-size:13px}
+.quiz-hint{margin:12px 0 6px;border:1px solid var(--line);border-radius:16px;background:#fffef7;padding:12px}
+.quiz-hint p{margin:3px 0 0;font-size:12px;color:var(--muted)}
+.hint-cars{display:flex;align-items:center;justify-content:center;gap:4px}
+.hint-cars svg{width:30%;max-width:102px;height:auto}
+.quiz-screen .primary{margin-top:15px}
+.quiz-screen .primary:disabled{visibility:hidden}
+@keyframes far-pass{from{transform:translateX(0)}to{transform:translateX(-130px)}}
+@keyframes near-pass{from{transform:translateX(0)}to{transform:translateX(-420px)}}
+@keyframes road-cruise{0%{transform:translateX(0)}25%{transform:translateX(1%)}85%{transform:translateX(1%)}100%{transform:translateX(0)}}
+@keyframes load-car{0%{transform:translate(-60%,22%);opacity:0}18%{opacity:1}100%{transform:translate(0,0);opacity:1}}
+@keyframes unload-car{0%{transform:translate(0,0);opacity:1}70%{opacity:1}100%{transform:translate(-65%,50%);opacity:0}}
+@media(max-height:740px){.app{padding-top:max(7px,env(safe-area-inset-top))}.heading{margin:8px 0}.scene{aspect-ratio:2}.carrier{bottom:31px}.counter{height:32px}.vehicle-choice{min-height:77px;padding:3px 6px}.vehicle-choice svg{height:42px}.vehicle-name{font-size:12px;min-height:30px;line-height:1.25}.shelf-navigation{padding-top:7px;min-height:46px}.status{min-height:24px}.parents{padding-top:7px}.quiz-screen{padding-top:8px}.quiz-garage{height:74px;margin-bottom:9px}.quiz-subtitle{margin-bottom:15px}.quiz-feedback{min-height:94px}}
+@media(max-width:350px){.app{padding-left:12px;padding-right:12px}.brand{font-size:15px}.heading h2{font-size:21px}.home-button{min-width:60px}.quiz-screen h2{font-size:22px}.answer{min-height:80px}.vehicle-name{font-size:12px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
@@ -92,14 +145,13 @@ h2{font-size:24px;line-height:1.4;margin:0;font-weight:700;letter-spacing:.07em}
 <path d="M13 44H21V49H10" fill="#f0e4b5"/><path d="M104 43H110V49H105" fill="#e1aa8a"/>
 <use href="#wheel" x="22" y="47" width="20" height="20"/><use href="#wheel" x="84" y="47" width="20" height="20"/>
 </symbol>
-<symbol id="suv" viewBox="0 0 120 72">
-<path d="M10 31Q10 26 17 26H30L39 16H82Q87 16 90 23L96 34 107 36Q112 37 113 43V57H8V39Z" fill="#c6aa57" stroke="#a58c41" stroke-width="1.5"/>
-<path d="M38 31L44 21H58V33H37Z" fill="#ecedd6"/><path d="M64 21H80L86 33H64Z" fill="#ecedd6"/>
-<path d="M16 31H30V41H15Z" fill="#ecedd6"/>
-<path d="M8 49H113V56H8Z" fill="#9c926e"/>
-<rect x="69" y="38" width="8" height="2.5" rx="1" fill="#f4eccb"/>
-<rect x="105" y="39" width="8" height="7" rx="1" fill="#f5eaca"/>
-<use href="#wheel" x="20" y="47" width="21" height="21"/><use href="#wheel" x="85" y="47" width="21" height="21"/>
+<symbol id="pickup" viewBox="0 0 120 72">
+<path d="M9 37H52V24Q52 21 57 21H77L92 37H105Q111 37 112 44V57H8V41Z" fill="#c4a65c" stroke="#9c8242" stroke-width="1.5"/>
+<path d="M12 32H47V39H12Z" fill="#9c8242"/><path d="M13 34H46V37H13Z" fill="#e7d7a3"/>
+<path d="M58 25H65V37H57Z" fill="#e4eddf"/><path d="M69 25H76L86 37H69Z" fill="#e4eddf"/>
+<path d="M53 40V54M90 39V54" stroke="#a58c4c" stroke-width="1.3"/><rect x="59" y="42" width="8" height="2.5" rx="1" fill="#f1e8c8"/>
+<path d="M9 50H111V56H9Z" fill="#9b9175"/><rect x="105" y="40" width="7" height="6" rx="1" fill="#f5e7bb"/>
+<use href="#wheel" x="21" y="47" width="21" height="21"/><use href="#wheel" x="85" y="47" width="21" height="21"/>
 </symbol>
 <symbol id="fire" viewBox="0 0 120 72">
 <path d="M9 28H78V20H97L111 34V56H8V33Z" fill="#b86d5f" stroke="#975348" stroke-width="1.5"/>
@@ -121,6 +173,63 @@ h2{font-size:24px;line-height:1.4;margin:0;font-weight:700;letter-spacing:.07em}
 <path d="M61 41L63 45 68 46 65 49 66 54 61 52 57 54 58 49 54 46 59 45Z" fill="#c6ad65"/>
 <rect x="103" y="41" width="7" height="5" rx="1" fill="#f0e4b5"/>
 <use href="#wheel" x="21" y="47" width="20" height="20"/><use href="#wheel" x="84" y="47" width="20" height="20"/>
+</symbol>
+<symbol id="ambulance" viewBox="0 0 120 72">
+<path d="M11 22Q11 18 16 18H78L96 29 110 40V57H9V28Z" fill="#f5f3e6" stroke="#929d97" stroke-width="1.5"/>
+<path d="M13 43H108V50H13Z" fill="#b97869"/>
+<rect x="20" y="25" width="20" height="12" rx="2" fill="#c3dadb"/><rect x="48" y="25" width="20" height="12" rx="2" fill="#c3dadb"/>
+<path d="M81 27L94 33 101 40H81Z" fill="#c3dadb"/><path d="M75 23V55" stroke="#b3bdb4" stroke-width="1.5"/>
+<rect x="77" y="14" width="15" height="6" rx="2" fill="#b97869"/>
+<rect x="106" y="42" width="6" height="6" rx="1" fill="#ebddb4"/>
+<use href="#wheel" x="20" y="47" width="21" height="21"/><use href="#wheel" x="86" y="47" width="21" height="21"/>
+</symbol>
+<symbol id="tanker" viewBox="0 0 120 72">
+<rect x="10" y="48" width="100" height="9" rx="2" fill="#748b87"/>
+<rect x="9" y="23" width="68" height="28" rx="14" fill="#cad3cc" stroke="#8b9c96" stroke-width="1.5"/>
+<path d="M20 26Q14 36 20 47M64 26Q72 36 64 47" fill="none" stroke="#a6b8af" stroke-width="2"/>
+<path d="M19 31H66" stroke="#eef0e7" stroke-width="3" stroke-linecap="round"/>
+<rect x="37" y="19" width="14" height="5" rx="2" fill="#8b9c96"/>
+<path d="M80 24H98L112 40V57H77V30Z" fill="#779faa" stroke="#597f8b" stroke-width="1.5"/>
+<path d="M84 28H96L104 39H84Z" fill="#e0ece7"/><rect x="84" y="44" width="7" height="2.5" rx="1" fill="#d4e4df"/>
+<rect x="108" y="43" width="5" height="6" rx="1" fill="#eedeae"/>
+<use href="#wheel" x="15" y="47" width="20" height="20"/><use href="#wheel" x="40" y="47" width="20" height="20"/><use href="#wheel" x="87" y="47" width="21" height="21"/>
+</symbol>
+<symbol id="mixer" viewBox="0 0 120 72">
+<path d="M13 48H111V57H12Z" fill="#898c98"/><path d="M18 40L8 50 17 52 28 42" fill="#a2b3ad" stroke="#7e958e" stroke-width="1.5"/>
+<path d="M25 40L31 22Q48 8 65 24L75 34Q71 48 54 50Z" fill="#e7debd" stroke="#b4a878" stroke-width="1.7"/>
+<path d="M37 18Q41 36 62 47M49 17Q52 30 71 40" fill="none" stroke="#adbbb0" stroke-width="6"/>
+<path d="M77 25H97L111 40V57H75V30Z" fill="#9d92ac" stroke="#82758f" stroke-width="1.5"/>
+<path d="M82 29H95L104 39H82Z" fill="#e1e9e3"/><rect x="82" y="44" width="7" height="2.5" rx="1" fill="#e0dce5"/>
+<rect x="107" y="43" width="5" height="6" rx="1" fill="#eadcae"/>
+<use href="#wheel" x="16" y="47" width="20" height="20"/><use href="#wheel" x="39" y="47" width="20" height="20"/><use href="#wheel" x="86" y="47" width="21" height="21"/>
+</symbol>
+<symbol id="garbage" viewBox="0 0 120 72">
+<path d="M12 24Q12 20 18 20H72V54H19L8 45Z" fill="#8faf9b" stroke="#698e7a" stroke-width="1.5"/>
+<path d="M12 27L25 31V50L12 45Z" fill="#6c9280"/><path d="M11 39L25 44V51L9 46Z" fill="#bad0bb"/>
+<path d="M35 27H65V44H35Z" fill="#acc6b2"/><path d="M37 46H65" stroke="#c8d8c5" stroke-width="2"/>
+<path d="M76 25H97L111 40V57H73V29Z" fill="#79a39d" stroke="#5d857f" stroke-width="1.5"/>
+<path d="M81 29H95L104 39H81Z" fill="#dce9dd"/><rect x="81" y="43" width="7" height="2.5" rx="1" fill="#d7e3d7"/>
+<path d="M9 53H111V58H9Z" fill="#6c827a"/><rect x="107" y="43" width="5" height="6" rx="1" fill="#eadeb5"/>
+<use href="#wheel" x="22" y="47" width="21" height="21"/><use href="#wheel" x="86" y="47" width="21" height="21"/>
+</symbol>
+<symbol id="sports" viewBox="0 0 120 72">
+<path d="M9 44L31 39 46 28Q49 26 55 26H69L85 39 108 43Q112 44 113 50L110 57H9L7 51Z" fill="#c58e65" stroke="#a97450" stroke-width="1.5"/>
+<path d="M40 39L51 30H59V39Z" fill="#dce6dd"/><path d="M63 30H68L78 39H63Z" fill="#dce6dd"/>
+<path d="M13 35H28M19 36V42" stroke="#9b755d" stroke-width="3" stroke-linecap="round"/>
+<path d="M46 49H75" stroke="#e5c3a1" stroke-width="3" stroke-linecap="round"/><path d="M98 43H109L106 47H96Z" fill="#ede2b8"/>
+<path d="M10 54H110" stroke="#94755e" stroke-width="3"/>
+<use href="#wheel" x="20" y="47" width="21" height="21"/><use href="#wheel" x="84" y="47" width="21" height="21"/>
+</symbol>
+<symbol id="tow" viewBox="0 0 120 72">
+<path d="M8 49H110V57H8Z" fill="#728aa1" stroke="#586f86" stroke-width="1.5"/>
+<path d="M58 49L37 22 18 27" fill="none" stroke="#aaae9c" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M57 49L39 39" stroke="#818f8b" stroke-width="4"/>
+<path d="M18 28V36Q11 37 13 43Q15 47 20 42" fill="none" stroke="#718783" stroke-width="2.5" stroke-linecap="round"/>
+<path d="M77 25H97L111 40V57H73V31Z" fill="#819bb8" stroke="#607d99" stroke-width="1.5"/>
+<path d="M81 29H95L104 39H81Z" fill="#dfe9e0"/>
+<rect x="83" y="20" width="12" height="5" rx="2" fill="#c7ad6b"/><rect x="81" y="44" width="7" height="2.5" rx="1" fill="#d5e0e4"/>
+<rect x="107" y="43" width="5" height="6" rx="1" fill="#eee0b5"/>
+<use href="#wheel" x="20" y="47" width="21" height="21"/><use href="#wheel" x="86" y="47" width="21" height="21"/>
 </symbol>
 <symbol id="carrier-base" viewBox="0 0 360 136">
 <path d="M13 87H269V97H13Z" fill="#91a7a0" stroke="#728d86" stroke-width="1.5"/>
@@ -153,16 +262,38 @@ h2{font-size:24px;line-height:1.4;margin:0;font-weight:700;letter-spacing:.07em}
 <path d="M23 135V149M384 131V146" stroke="#9aa894" stroke-width="4"/>
 <ellipse cx="23" cy="120" rx="16" ry="24" fill="#c2d2bd"/><ellipse cx="384" cy="116" rx="14" ry="25" fill="#c2d2bd"/>
 </svg>
+<svg class="road-view" viewBox="0 0 420 240" preserveAspectRatio="none" aria-hidden="true">
+<rect width="420" height="240" fill="#e7efeb"/>
+<g fill="#f5f6ed"><ellipse cx="86" cy="42" rx="34" ry="9"/><ellipse cx="288" cy="32" rx="25" ry="7"/></g>
+<g class="road-far"><path d="M-150 128Q-80 70 10 110T180 106T360 112T560 101T730 114V185H-150Z" fill="#d1decd"/><path d="M-100 145Q0 110 100 135T310 132T560 137T760 125V185H-100Z" fill="#deE6d5"/></g>
+<rect y="157" width="420" height="22" fill="#c5d4bd"/><rect y="177" width="420" height="63" fill="#cdd5ce"/>
+<path d="M0 184H420M0 236H420" stroke="#f4f3e5" stroke-width="2"/>
+<g class="road-dashes"><path d="M-10 220H875" stroke="#f2f1df" stroke-width="3" stroke-dasharray="34 32"/></g>
+<g class="road-near">
+<g><path d="M38 115V172M245 130V172" stroke="#96a88f" stroke-width="5"/><ellipse cx="38" cy="113" rx="19" ry="31" fill="#b5cbb0"/><ellipse cx="245" cy="130" rx="14" ry="25" fill="#adc7ae"/><path d="M332 123V174" stroke="#9aa895" stroke-width="4"/><rect x="300" y="111" width="93" height="24" rx="6" fill="#f1f1df" stroke="#becab7"/><text class="road-sign" x="346" y="127" text-anchor="middle" font-size="11" fill="#5a7166" font-family="sans-serif">しゃこ →</text></g>
+<g transform="translate(420 0)"><path d="M38 115V172M245 130V172" stroke="#96a88f" stroke-width="5"/><ellipse cx="38" cy="113" rx="19" ry="31" fill="#b5cbb0"/><ellipse cx="245" cy="130" rx="14" ry="25" fill="#adc7ae"/><path d="M332 123V174" stroke="#9aa895" stroke-width="4"/><rect x="300" y="111" width="93" height="24" rx="6" fill="#f1f1df" stroke="#becab7"/><text class="road-sign" x="346" y="127" text-anchor="middle" font-size="11" fill="#5a7166" font-family="sans-serif">しゃこ →</text></g>
+</g></svg>
 <span class="scene-tag" id="scene-tag">しゃこ</span>
 <svg class="place-building" viewBox="0 0 70 58" aria-hidden="true"><path d="M5 16L35 3 65 16V53H5Z" fill="#c6cbb9"/><rect x="15" y="23" width="40" height="30" rx="2" fill="#afbeac"/><path d="M15 30H55M15 37H55M15 44H55" stroke="#cdd5c4" stroke-width="2"/></svg>
 <div class="carrier" id="carrier"><svg class="truck-frame" viewBox="0 0 360 136" aria-hidden="true"><use href="#carrier-base"/></svg><div class="cargo-slots" id="cargo-slots"></div></div>
 <div class="parking" id="parking" aria-label="届けた車" hidden></div>
 </div>
-<div class="counter" aria-label="車の台数"><span id="counter-label">のっている くるま</span><strong id="count">0</strong><span class="units">だい</span></div>
+<div class="counter" id="counter" aria-label="車の台数"><span id="counter-label">のっている くるま</span><strong id="count">0</strong><span class="units">だい</span></div>
 <div class="choices" id="choices" aria-label="乗せたい車を選ぶ"></div>
+<nav class="shelf-navigation" id="shelf-navigation" aria-label="車の一覧のページ切り替え"><button type="button" id="previous-page" aria-label="前の車を見る" disabled>‹</button><span class="shelf-page" id="shelf-page" aria-live="polite" aria-atomic="true">くるま 1 / 3</span><button type="button" id="next-page" aria-label="次の車を見る">›</button></nav>
 <div class="phase-note" id="phase-note" hidden><svg id="note-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#home"/></svg><p id="note-title"></p><small id="note-subtitle"></small></div>
 <div class="status" id="status" role="status" aria-live="polite" aria-atomic="true">タップすると のるよ</div>
 <button type="button" class="primary" id="primary" disabled>しゅっぱつ</button>
+</section>
+<section class="quiz-screen" id="quiz-screen" aria-labelledby="quiz-title" hidden>
+<svg class="quiz-garage" viewBox="0 0 160 120" aria-hidden="true"><rect x="3" y="3" width="154" height="114" rx="20" fill="#e9ede3"/><path d="M26 43L80 17 134 43V102H26Z" fill="#bdc8b6"/><path d="M24 43L80 16 136 43" fill="none" stroke="#93a68f" stroke-width="5" stroke-linejoin="round"/><rect x="40" y="51" width="80" height="52" rx="3" fill="#869c8b"/><use href="#carrier-base" x="44" y="69" width="72" height="28"/></svg>
+<h2 id="quiz-title" tabindex="-1">なんだい のせたかな？</h2>
+<p class="quiz-subtitle">しゅっぱつの ときの くるま</p>
+<div class="quiz-answers" id="quiz-answers" role="group" aria-label="出発したときの車の台数を選ぶ"></div>
+<div class="quiz-feedback" id="quiz-feedback" role="status" aria-live="polite" aria-atomic="true"><span class="feedback-mark" id="feedback-mark" aria-hidden="true" hidden></span><p class="feedback-text" id="feedback-text">すうじを えらんでね</p></div>
+<button type="button" class="hint-toggle" id="hint-toggle" aria-expanded="false" aria-controls="quiz-hint">くるまを みる</button>
+<div class="quiz-hint" id="quiz-hint" hidden><div class="hint-cars" id="hint-cars"></div><p>いっしょに かぞえてみよう</p></div>
+<button type="button" class="primary" id="quiz-finish" disabled>おしまい</button>
 </section>
 <section class="end-screen" id="end-screen" aria-labelledby="end-title" hidden>
 <svg class="garage-art" viewBox="0 0 340 255" role="img" aria-label="車庫に帰って休むカーキャリア">
@@ -180,120 +311,255 @@ h2{font-size:24px;line-height:1.4;margin:0;font-weight:700;letter-spacing:.07em}
 </svg>
 <h2 id="end-title" tabindex="-1">おとどけ おしまい</h2><p>くるまは しゃこで おやすみ。</p>
 </section>
-<footer class="parents"><details id="parent-details"><summary>保護者の方へ</summary><div class="parent-panel"><p>試作 0.1。車をタップして乗せ、乗っている車をタップすると降ろせます。１回の配送で終了します。途中でも右上の「かえる」で終われます。</p><p>音・出題・得点・広告・データ保存・外部へのデータ送信はありません。このメニューは本格的なチャイルドロックではありません。</p><button type="button" class="reset" id="reset">最初の画面に戻す</button></div></details></footer>
+<footer class="parents"><details id="parent-details"><summary>保護者の方へ</summary><div class="parent-panel"><p>試作 0.2。全10種類の車を、左右の矢印で4台ずつ切り替えて選びます。同じ車も最大3台まで積めます。車の積み降ろしは約1秒、行きと帰りの道はそれぞれ約7秒です。</p><p>配送後は車庫まで帰り、出発時の台数を1問だけ尋ねます。正解は○、不正解は×。何度でも選び直せます。「くるまを みる」で一緒に数えられます。途中の「かえる」やクイズ中の右上の「おしまい」では、回答せず終了できます。</p><p>音・得点・ランキング・報酬・広告・アプリによるデータ保存／送信はありません。端末の「視差効果を減らす」設定に応じて動きを省きます。この保護者メニューは本格的なチャイルドロックではありません。</p><button type="button" class="reset" id="reset">最初の画面に戻す</button></div></details></footer>
 <noscript><p>この試作を動かすには、ブラウザのJavaScriptを有効にしてください。</p></noscript>
 </main>
 <script>
 'use strict';
-// All game state lives only in memory. Refreshing starts a new, empty trip.
+// All state is in memory. No network requests, storage, audio or third-party code.
 const VEHICLES = Object.freeze([
   {id:'sedan', name:'セダン', description:'あおい セダン'},
-  {id:'suv', name:'SUV', description:'きいろい SUV'},
+  {id:'pickup', name:'ピックアップトラック', label:'ピックアップ<br>トラック', description:'きいろい ピックアップトラック'},
   {id:'fire', name:'しょうぼうしゃ', description:'あかい しょうぼうしゃ'},
-  {id:'police', name:'パトカー', description:'しろと くろの パトカー'}
+  {id:'police', name:'パトカー', description:'しろと くろの パトカー'},
+  {id:'ambulance', name:'きゅうきゅうしゃ', description:'しろい きゅうきゅうしゃ'},
+  {id:'tanker', name:'タンクローリー', description:'ぎんいろの タンクローリー'},
+  {id:'mixer', name:'ミキサーしゃ', description:'むらさきの ミキサーしゃ'},
+  {id:'garbage', name:'ごみしゅうしゅうしゃ', description:'みどりの ごみしゅうしゅうしゃ'},
+  {id:'sports', name:'スポーツカー', description:'オレンジの スポーツカー'},
+  {id:'tow', name:'レッカーしゃ', description:'あおい レッカーしゃ'}
 ]);
 const CAPACITY = 3;
-const state = {phase:'loading', cargo:[], delivered:[], message:'タップすると のるよ', timer:null, version:0};
-const get = id => document.getElementById(id);
-const ui = Object.fromEntries(['play-screen','end-screen','home-button','instruction','subtitle','scene','scene-tag','cargo-slots','parking','count','counter-label','choices','phase-note','note-title','note-subtitle','status','primary','parent-details','reset','end-title'].map(id=>[id,get(id)]));
-const vehicleById = id => VEHICLES.find(v=>v.id===id);
-function carIcon(id){return `<svg viewBox="0 0 120 72" aria-hidden="true" focusable="false"><use href="#${id}"/></svg>`;}
-function clearTimer(){if(state.timer!==null){window.clearTimeout(state.timer);state.timer=null;}state.version+=1;}
-function schedule(callback, milliseconds){
-  clearTimer();
-  const expectedVersion=state.version;
-  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  state.timer=window.setTimeout(()=>{state.timer=null;if(expectedVersion===state.version)callback();},reduced?40:milliseconds);
+const PAGE_SIZE = 4;
+const PAGE_COUNT = Math.ceil(VEHICLES.length / PAGE_SIZE);
+// Adjust only these values when changing the pace. CSS uses the same timings.
+const MOTION = Object.freeze({load:1050, unload:1150, drive:6800});
+for(const [name, milliseconds] of Object.entries(MOTION)) {
+  document.documentElement.style.setProperty(`--${name}-time`,`${milliseconds}ms`);
 }
-function renderCargo(){
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+const state = {
+  phase:'loading', cargo:Array(CAPACITY).fill(null), delivered:[], tripCargo:[],
+  page:0, moving:null, quizAfterReturn:false, answer:null, showHint:false,
+  message:'タップすると のるよ', timer:null, version:0
+};
+const get = id => document.getElementById(id);
+const ui = Object.fromEntries([
+  'play-screen','end-screen','quiz-screen','home-button','instruction','subtitle',
+  'scene','scene-tag','cargo-slots','parking','counter','count','counter-label',
+  'choices','shelf-navigation','shelf-page','previous-page','next-page','phase-note',
+  'note-title','note-subtitle','status','primary','parent-details','reset','end-title',
+  'quiz-title','quiz-answers','feedback-mark','feedback-text','hint-toggle','quiz-hint',
+  'hint-cars','quiz-finish'
+].map(id=>[id,get(id)]));
+const vehicleById = id => VEHICLES.find(v=>v.id===id);
+const cargoCount = () => state.cargo.filter(Boolean).length;
+const carIcon = id => `<svg viewBox="0 0 120 72" aria-hidden="true" focusable="false"><use href="#${id}"/></svg>`;
+function clearTimer() {
+  if(state.timer !== null) window.clearTimeout(state.timer);
+  state.timer = null;
+  state.version += 1;
+}
+// A version token invalidates delayed transitions after returning home or resetting.
+function schedule(callback, milliseconds, journey=false) {
+  clearTimer();
+  const version = state.version;
+  const wait = reducedMotion.matches ? (journey ? 1200 : 60) : milliseconds;
+  state.timer = window.setTimeout(()=>{
+    state.timer=null;
+    if(version===state.version) callback();
+  },wait);
+}
+function renderCargo() {
   ui['cargo-slots'].replaceChildren();
-  for(let i=0;i<CAPACITY;i++){
-    const item=state.cargo[i];
-    if(!item){const empty=document.createElement('div');empty.className='seat';empty.setAttribute('aria-hidden','true');empty.innerHTML='<span class="empty-outline"></span>';ui['cargo-slots'].append(empty);continue;}
-    const info=vehicleById(item);
-    const button=document.createElement('button');button.type='button';button.className='seat filled';
-    const canRemove=state.phase==='loading'||state.phase==='delivering';
+  let ordinal=0;
+  for(let i=0;i<CAPACITY;i++) {
+    const id=state.cargo[i];
+    if(!id) {
+      const empty=document.createElement('div'); empty.className='seat';
+      empty.setAttribute('aria-hidden','true'); empty.innerHTML='<span class="empty-outline"></span>';
+      ui['cargo-slots'].append(empty); continue;
+    }
+    ordinal+=1;
+    const info=vehicleById(id);
+    const button=document.createElement('button'); button.type='button'; button.className='seat filled';
+    button.dataset.slot=String(i);
+    const canRemove=['loading','delivering'].includes(state.phase) && !state.moving;
     button.disabled=!canRemove;
-    button.setAttribute('aria-label',`${i+1}台目、${info.description}。${canRemove?'タップして降ろす':'運んでいます'}`);
-    button.innerHTML=`<span class="seat-number" aria-hidden="true">${i+1}</span>${carIcon(item)}`;
-    button.addEventListener('click',()=>removeCar(i));ui['cargo-slots'].append(button);
+    button.setAttribute('aria-label',`${ordinal}台目、${info.description}。${canRemove?'タップして降ろす':'運んでいます'}`);
+    button.innerHTML=`<span class="seat-number" aria-hidden="true">${ordinal}</span><span class="car-art">${carIcon(id)}</span>`;
+    if(state.moving && state.moving.index===i) button.classList.add(`is-${state.moving.kind}`);
+    button.addEventListener('click',()=>removeCar(i));
+    ui['cargo-slots'].append(button);
   }
 }
-function renderChoices(){
+function renderChoices() {
   ui.choices.replaceChildren();
-  for(const info of VEHICLES){
-    const button=document.createElement('button');button.type='button';button.className='vehicle-choice';button.dataset.vehicle=info.id;
-    button.disabled=state.cargo.length>=CAPACITY||state.phase!=='loading';
+  for(const info of VEHICLES.slice(state.page*PAGE_SIZE,(state.page+1)*PAGE_SIZE)) {
+    const button=document.createElement('button');button.type='button';button.className='vehicle-choice';
+    button.dataset.vehicle=info.id;
+    button.disabled=cargoCount()>=CAPACITY || state.phase!=='loading' || !!state.moving;
     button.setAttribute('aria-label',`${info.description}を１台乗せる`);
-    button.innerHTML=`${carIcon(info.id)}<span class="vehicle-name">${info.name}</span>`;
+    button.innerHTML=`${carIcon(info.id)}<span class="vehicle-name">${info.label||info.name}</span>`;
     button.addEventListener('click',()=>addCar(info.id));ui.choices.append(button);
   }
+  ui['shelf-page'].textContent=`くるま ${state.page+1} / ${PAGE_COUNT}`;
+  ui['previous-page'].disabled=state.page===0 || !!state.moving;
+  ui['next-page'].disabled=state.page===PAGE_COUNT-1 || !!state.moving;
 }
-function renderParking(){
+function renderParking() {
   ui.parking.replaceChildren();
-  state.delivered.forEach(id=>{const spot=document.createElement('div');spot.className='parking-space';spot.setAttribute('role','img');spot.setAttribute('aria-label',`届けた${vehicleById(id).description}`);spot.innerHTML=carIcon(id);ui.parking.append(spot);});
+  for(const id of state.delivered) {
+    const spot=document.createElement('div');spot.className='parking-space';spot.setAttribute('role','img');
+    spot.setAttribute('aria-label',`届けた${vehicleById(id).description}`);spot.innerHTML=carIcon(id);ui.parking.append(spot);
+  }
 }
-function setNote(title, subtitle){ui['note-title'].textContent=title;ui['note-subtitle'].textContent=subtitle;}
-function render(){
-  const finished=state.phase==='ended';
-  ui['play-screen'].hidden=finished;ui['end-screen'].hidden=!finished;ui['home-button'].hidden=finished;
-  ui['home-button'].disabled=state.phase==='returning';
-  ui.scene.dataset.phase=state.phase;
-  ui.count.textContent=String(state.cargo.length);
-  ui.status.textContent=state.message;
-  if(finished)return;
+function setNote(title, subtitle) {
+  ui['note-title'].textContent=title;ui['note-subtitle'].textContent=subtitle;
+}
+function renderQuiz() {
+  const correct=state.answer!==null && state.answer===state.tripCargo.length;
+  ui['quiz-answers'].replaceChildren();
+  for(let number=1;number<=CAPACITY;number++) {
+    const button=document.createElement('button');button.type='button';button.className='answer';
+    button.dataset.answer=String(number);button.textContent=String(number);
+    button.setAttribute('aria-label',`${number}台`);
+    button.setAttribute('aria-pressed',String(number===state.answer));
+    button.disabled=correct;
+    if(number===state.answer) button.dataset.result=correct?'correct':'incorrect';
+    button.addEventListener('click',()=>answerQuiz(number));ui['quiz-answers'].append(button);
+  }
+  const mark=ui['feedback-mark'];
+  mark.hidden=state.answer===null;
+  mark.dataset.kind=correct?'correct':'incorrect';
+  mark.innerHTML=state.answer===null?'':correct?
+    '<svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="22" stroke="currentColor" fill="none" stroke-width="5"/></svg>':
+    '<svg viewBox="0 0 60 60"><path d="M14 14L46 46M46 14L14 46" stroke="currentColor" fill="none" stroke-width="5" stroke-linecap="round"/></svg>';
+  ui['feedback-text'].textContent=state.answer===null?'すうじを えらんでね':
+    correct?`まる。${state.tripCargo.length}だい のせたね`:'ばつ。もういちど えらんでね';
+  ui['quiz-finish'].disabled=!correct;
+  ui['hint-toggle'].setAttribute('aria-expanded',String(state.showHint));
+  ui['hint-toggle'].textContent=state.showHint?'くるまを かくす':'くるまを みる';
+  ui['quiz-hint'].hidden=!state.showHint;
+  ui['hint-cars'].replaceChildren();
+  for(const id of state.tripCargo) {
+    const span=document.createElement('span');
+    // No numeric labels in the hint: the child can count the actual cars.
+    span.style.display='contents';span.innerHTML=carIcon(id);
+    const svg=span.firstElementChild;svg.removeAttribute('aria-hidden');svg.setAttribute('role','img');
+    svg.setAttribute('aria-label',vehicleById(id).description);
+    ui['hint-cars'].append(svg);
+  }
+}
+function render() {
+  const ended=state.phase==='ended', quiz=state.phase==='quiz';
+  const driving=['traveling','returning'].includes(state.phase);
+  ui['play-screen'].hidden=ended||quiz;ui['end-screen'].hidden=!ended;ui['quiz-screen'].hidden=!quiz;
+  ui['home-button'].hidden=ended;
+  ui['home-button'].disabled=false;
+  ui['home-button'].innerHTML=`<svg aria-hidden="true"><use href="#home"/></svg>${quiz||state.phase==='returning'?'おしまい':'かえる'}`;
+  ui['home-button'].setAttribute('aria-label',quiz||state.phase==='returning'?'すぐに終了する':'途中でも車庫へ帰って終了する');
+  if(driving && ui.scene.dataset.phase!==state.phase) {
+    ui.scene.classList.remove('is-driving');
+    void ui.scene.offsetWidth; // Restart the road when a trip is interrupted by returning home.
+  }
+  ui.scene.dataset.phase=state.phase;ui.scene.classList.toggle('is-driving',driving);
+  if(ended) return;
+  if(quiz) {renderQuiz();return;}
   const loading=state.phase==='loading';
-  ui.choices.hidden=!loading;ui['phase-note'].hidden=loading;
-  ui.parking.hidden=state.phase!=='delivering';
+  ui.choices.hidden=!loading;ui['shelf-navigation'].hidden=!loading;ui['phase-note'].hidden=loading;
+  ui.parking.hidden=state.phase!=='delivering';ui.counter.hidden=state.phase==='returning';
+  ui.count.textContent=String(cargoCount());ui.status.textContent=state.message;
   ui['counter-label'].textContent=state.phase==='delivering'?'のこりの くるま':'のっている くるま';
   ui.primary.disabled=true;
-  if(loading){
+  if(loading) {
     ui.instruction.textContent='くるまを のせよう';ui.subtitle.textContent='すきなくるまを ３だいまで';ui['scene-tag'].textContent='しゃこ';
-    ui.primary.textContent='しゅっぱつ';ui.primary.disabled=state.cargo.length===0;
-  }else if(state.phase==='traveling'){
-    ui.instruction.textContent='とどけに いこう';ui.subtitle.textContent='カーキャリアで おとどけ';ui['scene-tag'].textContent='おとどけの みち';
-    ui.primary.textContent='はこんでいるよ';setNote('くるまを はこんでいるよ','とどけさきへ むかいます');
-  }else if(state.phase==='delivering'){
-    const empty=state.cargo.length===0;
+    ui.primary.textContent='しゅっぱつ';ui.primary.disabled=cargoCount()===0||!!state.moving;
+  } else if(state.phase==='traveling') {
+    ui.instruction.textContent='とどけに いこう';ui.subtitle.textContent='ゆっくり はこんで いこう';ui['scene-tag'].textContent='おとどけの みち';
+    ui.primary.textContent='はこんでいるよ';setNote('みちを はしっているよ','とどけさきへ むかっています');
+  } else if(state.phase==='delivering') {
+    const empty=cargoCount()===0;
     ui.instruction.textContent=empty?'くるまを とどけたね':'くるまを おろそう';
     ui.subtitle.textContent=empty?'しゃこへ かえろう':'のっている くるまを タップ';ui['scene-tag'].textContent='とどけさき';
-    ui.primary.textContent=empty?'しゃこへ かえる':'くるまを おろそう';ui.primary.disabled=!empty;
-    setNote(empty?'おとどけ おわり':'くるまを タップ',empty?'つぎは しゃこで おやすみ':'１だいずつ おろそう');
-  }else if(state.phase==='returning'){
+    ui.primary.textContent=empty?'しゃこへ かえる':'くるまを おろそう';ui.primary.disabled=!empty||!!state.moving;
+    setNote(empty?'おとどけ おわり':'くるまを タップ',empty?'かえりも ゆっくり はしろう':'１だいずつ おろそう');
+  } else if(state.phase==='returning') {
     ui.instruction.textContent='しゃこへ かえろう';ui.subtitle.textContent='きょうの おとどけは おしまい';ui['scene-tag'].textContent='かえりみち';
-    ui.primary.textContent='しゃこへ かえります';setNote('くるまは おやすみ','しゃこへ かえります');
+    ui.primary.textContent='しゃこへ むかっています';setNote('みちを はしって かえろう','もうすぐ しゃこだよ');
   }
+  for(const sign of document.querySelectorAll('.road-sign')) sign.textContent=state.phase==='returning'?'しゃこ →':'おとどけ →';
   renderCargo();renderChoices();renderParking();
 }
-function addCar(id){
-  if(state.phase!=='loading'||state.cargo.length>=CAPACITY||!vehicleById(id))return;
-  state.cargo.push(id);state.message=state.cargo.length===CAPACITY?'３だい のったね。しゅっぱつ できるよ':`${vehicleById(id).name}が のったね`;
-  render();
+function addCar(id) {
+  if(state.phase!=='loading'||state.moving||cargoCount()>=CAPACITY||!vehicleById(id)) return;
+  const index=state.cargo.indexOf(null);
+  state.cargo[index]=id;state.moving={kind:'loading',index};state.message='ゆっくり のせているよ';render();
+  schedule(()=>{
+    state.moving=null;
+    state.message=cargoCount()===CAPACITY?'３だい のったね。しゅっぱつ できるよ':`${vehicleById(id).name}が のったね`;
+    render();
+  },MOTION.load);
 }
-function removeCar(index){
-  if(!['loading','delivering'].includes(state.phase)||index<0||index>=state.cargo.length)return;
-  const [id]=state.cargo.splice(index,1);
-  if(state.phase==='delivering'){
-    state.delivered.push(id);state.message=state.cargo.length?`${vehicleById(id).name}を とどけたね`:'みんな とどいたね。しゃこへ かえろう';
-  }else state.message=state.cargo.length?'ほかの くるまも のせられるよ':'タップすると のるよ';
-  render();
+function removeCar(index) {
+  if(!['loading','delivering'].includes(state.phase)||state.moving||!Number.isInteger(index)||index<0||index>=CAPACITY||!state.cargo[index]) return;
+  const id=state.cargo[index];
+  state.moving={kind:'unloading',index};state.message='ゆっくり おろしているよ';render();
+  schedule(()=>{
+    // Keep fixed slots; neighbouring cars must not jump when one is unloaded.
+    state.cargo[index]=null;state.moving=null;
+    if(state.phase==='delivering') {
+      state.delivered.push(id);
+      state.message=cargoCount()?`${vehicleById(id).name}を とどけたね`:'みんな とどいたね。しゃこへ かえろう';
+    } else state.message=cargoCount()?'ほかの くるまも のせられるよ':'タップすると のるよ';
+    render();
+  },MOTION.unload);
 }
-function depart(){
-  if(state.phase!=='loading'||state.cargo.length===0)return;
+function changePage(delta) {
+  if(state.phase!=='loading'||state.moving) return;
+  state.page=Math.max(0,Math.min(PAGE_COUNT-1,state.page+delta));renderChoices();
+}
+function depart() {
+  if(state.phase!=='loading'||state.moving||cargoCount()===0) return;
+  // Immutable snapshot: count vehicles on departure, not taps or the empty carrier on return.
+  state.tripCargo=Object.freeze(state.cargo.filter(Boolean));state.delivered=[];
   state.phase='traveling';state.message='';render();
-  schedule(()=>{state.phase='delivering';state.message='のっている くるまを タップしてね';render();},1600);
+  schedule(()=>{state.phase='delivering';state.message='のっている くるまを タップしてね';render();},MOTION.drive,true);
 }
-function goHome(){
-  if(['returning','ended'].includes(state.phase))return;
-  clearTimer();state.phase='returning';state.message='';render();
-  schedule(()=>{state.phase='ended';render();ui['end-title'].focus({preventScroll:true});},1250);
+function endGame() {
+  clearTimer();state.phase='ended';state.moving=null;render();ui['end-title'].focus({preventScroll:true});
 }
-function resetGame(){
-  clearTimer();state.phase='loading';state.cargo=[];state.delivered=[];state.message='タップすると のるよ';ui['parent-details'].open=false;render();
+function goHome(withQuiz=false) {
+  if(state.phase==='ended') return;
+  if(state.phase==='quiz'||state.phase==='returning') {endGame();return;}
+  const completed=state.phase==='delivering'&&cargoCount()===0&&state.tripCargo.length>0&&state.delivered.length===state.tripCargo.length;
+  clearTimer();state.moving=null;state.quizAfterReturn=withQuiz&&completed;state.phase='returning';state.message='';render();
+  schedule(()=>{
+    if(state.quizAfterReturn) {
+      state.phase='quiz';state.answer=null;state.showHint=false;render();ui['quiz-title'].focus({preventScroll:true});
+    } else endGame();
+  },MOTION.drive,true);
 }
-ui.primary.addEventListener('click',()=>{if(state.phase==='loading')depart();else if(state.phase==='delivering'&&state.cargo.length===0)goHome();});
-ui['home-button'].addEventListener('click',goHome);
-ui.reset.addEventListener('click',()=>{if(window.confirm('最初の画面に戻しますか？ 新しい配送が始まります。'))resetGame();});
+function answerQuiz(number) {
+  if(state.phase!=='quiz'||state.answer===state.tripCargo.length||!Number.isInteger(number)||number<1||number>CAPACITY) return;
+  state.answer=number;renderQuiz();
+  // Keep the result on screen until another choice or an explicit end; no automatic retry.
+}
+function resetGame() {
+  clearTimer();state.phase='loading';state.cargo=Array(CAPACITY).fill(null);state.delivered=[];state.tripCargo=[];
+  state.page=0;state.moving=null;state.quizAfterReturn=false;state.answer=null;state.showHint=false;
+  state.message='タップすると のるよ';ui['parent-details'].open=false;render();
+}
+ui.primary.addEventListener('click',()=>{
+  if(state.phase==='loading') depart();
+  else if(state.phase==='delivering'&&cargoCount()===0&&!state.moving) goHome(true);
+});
+ui['home-button'].addEventListener('click',()=>goHome(false));
+ui['previous-page'].addEventListener('click',()=>changePage(-1));
+ui['next-page'].addEventListener('click',()=>changePage(1));
+ui['quiz-finish'].addEventListener('click',()=>{if(state.phase==='quiz'&&state.answer===state.tripCargo.length) endGame();});
+ui['hint-toggle'].addEventListener('click',()=>{if(state.phase==='quiz'){state.showHint=!state.showHint;renderQuiz();}});
+ui.reset.addEventListener('click',()=>{if(window.confirm('最初の画面に戻しますか？ 新しい配送が始まります。')) resetGame();});
 render();
 </script>
 </body>
